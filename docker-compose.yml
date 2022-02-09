@@ -1,0 +1,86 @@
+# config.
+version: "3"
+
+networks:
+  payment-net: {}
+
+# volumes.
+volumes:
+  # Database Data.
+  database-data:
+  # Redis Data.
+  redis-data:
+  # .config.
+  dot-config:
+  # .local.
+  dot-local:
+  # .cache.
+  dot-cache:
+  # .composer.
+  dot-composer:
+
+# services.
+services:
+  # MySQL.
+  db:
+    image: mysql:5.7
+    container_name: payment-mysql
+    restart: unless-stopped
+    networks:
+      - payment-net
+    volumes:
+      - database-data:/var/lib/mysql
+    ports:
+      - 3307:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=payment
+      - MYSQL_DATABASE=payment
+      - MYSQL_USER=payment
+      - MYSQL_PASSWORD=payment
+
+  # API.
+  api:
+    image: ambientum/php:7.4-nginx
+    container_name: payment-api
+    restart: unless-stopped
+    networks:
+      - payment-net
+    environment:
+      - XDEBUG_ENABLED=true
+      - PHP_IDE_CONFIG=paymentName=ambientum
+    volumes:
+      - .:/var/www/app:cached
+      - dot-config:/home/ambientum/.config:cached
+      - dot-cache:/home/ambientum/.cache:cached
+      - dot-local:/home/ambientum/.local:cached
+      - dot-composer:/home/ambientum/.composer:cached
+    ports:
+      - 80:8080
+      - 443:8083
+    links:
+      - db
+  
+  redis:
+    image: redis:6-alpine
+    container_name: payment-redis
+    command: redis-server --bind 0.0.0.0 --requirepass '@secret99D'
+    restart: unless-stopped
+    networks:
+      - payment-net
+    volumes:
+      - redis-data:/data:cached
+    ports:
+      - 6380:6379
+  
+  queue:
+    image: ambientum/php:7.4
+    container_name: payment-queue
+    command: php artisan horizon
+    networks:
+      - payment-net
+    volumes:
+      - .:/var/www/app:cached
+    restart: unless-stopped
+    links:
+      - db
+      - redis
