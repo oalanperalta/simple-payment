@@ -7,34 +7,26 @@ use Illuminate\Contracts\Validation\Rule;
 class AllowTransfer implements Rule
 {
     /**
-     * Create a new rule instance.
-     *
-     * @return void
+     * @todo Ponto de melhoria: Pode buscar no banco quais os tipos de usuarios podem fazer transferencia
      */
-    public function __construct()
+    protected int $allowTypeUser = 1;
+    protected int $typeUser;
+
+    public function __construct($typeUser)
     {
-        //
+        $this->typeUser = $typeUser;
     }
 
     /**
-     * Determine if the validation rule passes.
-     *
-     * @param  string  $attribute
-     * @param  mixed  $value
-     * @return bool
+     * Verifica se o usuario e do tipo comum, caso seja lojista ele bloqueia a transferencia
      */
     public function passes($attribute, $value)
     {
-        //
+        return $this->allowTypeUser === $this->typeUser;
     }
 
-    /**
-     * Get the validation error message.
-     *
-     * @return string
-     */
     public function message()
     {
-        return 'The validation error message.';
+        return 'Your profile does not allow transfer.';
     }
 }

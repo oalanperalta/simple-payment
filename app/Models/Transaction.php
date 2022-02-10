@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Events\TransactionCreated;
+use App\Jobs\AuthorizeTransactionProcessJob;
 use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
@@ -13,12 +15,16 @@ class Transaction extends Model
         'status_id',
     ];
 
+    /* protected $dispatchesEvents = [
+        'created' => AuthorizeTransactionProcessJob::class
+    ]; */
+
     /**
      * Relacionamento com a table Users - Pagante
      */
     public function payer()
     {
-        return $this->hasOne(User::class);
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -26,7 +32,7 @@ class Transaction extends Model
      */
     public function payee()
     {
-        return $this->hasOne(User::class);
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -34,6 +40,6 @@ class Transaction extends Model
      */
     public function status()
     {
-        return $this->hasOne(Status::class);
+        return $this->belongsTo(StatusTransaction::class);
     }
 }

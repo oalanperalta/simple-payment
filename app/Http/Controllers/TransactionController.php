@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\TransactionCreated;
 use App\Http\Requests\TransactionRequest;
 use App\Interfaces\TransactionRepositoryInterface;
+use App\Jobs\AuthorizeTransactionProcessJob;
+use App\Models\Transaction;
 use App\Repositories\TransactionRepository;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -17,42 +21,45 @@ class TransactionController extends Controller
     {
         $this->transactionRepository = $transactionRepository;
     }
-    public function index()
+
+    /**
+     * Metodo para realizar transferencia
+     */
+    public function tranfer(TransactionRequest $request): JsonResponse
     {
-        //
-    }
-    public function create()
-    {
-        //
+        $transaction = $this->transactionRepository->createTransaction($request->all());
+
+        /**
+         * @todo Investigar o pq não está funcionando
+         */
+        //TransactionCreated::dispatch($transaction);
+
+        AuthorizeTransactionProcessJob::dispatch($transaction);
+
+        return response()->json(['data' => $transaction],Response::HTTP_CREATED);
     }
 
-    public function store(TransactionRequest $request): JsonResponse
+    /**
+     * Metodo para buscar transações de um usuário
+     */
+    public function getTransactionsByUser($id, Request $request)
     {
-        return response()->json(
-            [
-                'data' => $this->transactionRepository->createTransaction($request->all())
-            ],
-            Response::HTTP_CREATED
-        );
+        try {
+            return response()->json(['data' => $this->transactionRepository->getAllTransactionsByUser($id, $request->perPage)],Response::HTTP_OK);
+        } catch (Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
 
-    public function show($id)
+    /**
+     * Metodo para reverter a transação
+     */
+    public function revertTransaction($transactionId)
     {
-        //
-    }
-
-    public function edit($id)
-    {
-        //
-    }
-
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    public function destroy($id)
-    {
-        //
+        try {
+            return response()->json(['data' => $this->transactionRepository->revertTransaction($transactionId)], Response::HTTP_ACCEPTED);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
     }
 }

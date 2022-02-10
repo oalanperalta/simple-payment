@@ -1,7 +1,12 @@
 <?php
 
 use App\Http\Controllers\TransactionController;
+use App\Mail\ReceivedTransaction;
+use App\Mail\ReversedTransaction;
+use App\Mail\TransactionExecutedSuccessfully;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,4 +24,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('transaction', [TransactionController::class, 'store']);
+Route::post('transaction', [TransactionController::class, 'tranfer']);
+Route::put('transaction/{id}/revert', [TransactionController::class, 'revertTransaction']);
+Route::get('user/{id}/transaction', [TransactionController::class, 'getTransactionsByUser']);
+
+Route::get('testMail', function () {
+    $transaction = Transaction::find(91);
+    Mail::send(new ReversedTransaction($transaction));
+});
